@@ -1,0 +1,59 @@
+version: '3.3'
+
+services:
+  db:
+    image: mysql:5.7
+    volumes:
+      - "./db_data:/var/lib/mysql"
+      - "./new_db/starter_db.sql:/docker-entrypoint-initdb.d/starter_db.sql"
+    networks:
+      - internal
+    ports:
+      - "3306:3306"
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: password
+      MYSQL_DATABASE: wordpress
+      MYSQL_USER: wordpress
+      MYSQL_PASSWORD: wordpress
+
+  phpmyadmin:
+    depends_on:
+      - db
+    image: phpmyadmin/phpmyadmin
+    restart: always
+    ports:
+      - '8080:80'
+    environment:
+      PMA_HOST: db
+      MYSQL_ROOT_PASSWORD: password
+    networks:
+      - internal
+
+  wordpress:
+    depends_on:
+      - db
+    image: wordpress:latest
+    networks:
+      - internal
+      - external
+    working_dir: /var/www/html
+    volumes:
+      - "./my_site/public:/var/www/html"
+    ports:
+      - "8000:80"
+    restart: always
+    environment:
+      WORDPRESS_DB_HOST: db:3306
+      WORDPRESS_DB_USER: wordpress
+      WORDPRESS_DB_PASSWORD: wordpress
+      WORDPRESS_DB_NAME: wordpress
+volumes:
+  db_data: {}
+  wp-data: {}
+
+networks:
+  external:
+    driver: bridge
+  internal:
+    driver: bridge
